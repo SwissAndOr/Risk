@@ -1,54 +1,54 @@
 "North America" 5:
-070 060 "Alaska" 01
-150 065 "Northwest Territory" 00
-130 100 "Alberta"
-110 150 "Western United States"
-115 210 "Central America"
-180 160 "Eastern United States"
-200 100 "Ontario"
-260 100 "Quebec"
-370 040 "Greenland"
+070 060 "Alaska" 01 02 47
+150 065 "Northwest Territory" 00 01 06 08
+130 100 "Alberta" 00 01 03 06
+110 150 "Western United States" 02 04 05 06
+115 210 "Central America" 03 05 10
+180 160 "Eastern United States" 03 04 06 07
+200 100 "Ontario" 01 02 03 05 07 08
+260 100 "Quebec" 05 06 08
+370 040 "Greenland" 01 06 07 20
 
 "South America" 2:
-210 280 "Venezuela"
-220 350 "Peru"
-250 420 "Argentina"
-290 340 "Brazil"
+210 280 "Venezuela" 04 11 13
+220 350 "Peru" 10 12 13
+250 420 "Argentina" 11 13
+290 340 "Brazil" 10 11 12 30
 
 "Europe" 5:
-410 060 "Iceland"
-450 100 "Great Britain"
-460 130 "Western Europe"
-530 140 "Southern Europe"
-500 110 "Northern Europe"
-490 070 "Scandinavia"
-570 100 "Ukraine"
+410 060 "Iceland" 08 21 25
+450 100 "Great Britain" 20 22 24 25
+460 130 "Western Europe" 21 23 24 30
+530 140 "Southern Europe" 22 24 26 30 35 40
+500 110 "Northern Europe" 21 22 23 25 26
+490 070 "Scandinavia" 20 21 24 26
+570 100 "Ukraine" 23 24 25 40 42 43
 
 "Africa" 3:
-460 240 "North Africa"
-530 300 "Congo"
-530 390 "South Africa"
-605 365 "Madagascar"
-560 250 "East Africa"
-530 200 "Egypt"
+460 240 "North Africa" 13 22 23 31 34 35
+530 300 "Congo" 30 32 34
+530 390 "South Africa" 31 33 34
+605 365 "Madagascar" 32 34
+560 250 "East Africa" 30 31 32 33 35 40
+530 200 "Egypt" 23 30 34 40
 
 "Asia" 7:
-600 170 "Middle East"
-715 210 "India"
-650 130 "Afghanistan"
-650 080 "Ural"
-710 070 "Siberia"
-770 100 "Irkutsk"
-800 070 "Yakutsk"
-880 060 "Kamchatka"
-896 163 "Japan"
-790 130 "Mongolia"
-800 180 "China"
-800 240 "Siam"
+600 170 "Middle East" 23 26 34 40 41 42
+715 210 "India" 40 42 4a 4b
+650 130 "Afghanistan" 26 40 41 43 4a
+650 080 "Ural" 26 42 44 4a
+710 070 "Siberia" 43 45 46 49 4a
+770 100 "Irkutsk" 44 46 47 49
+800 070 "Yakutsk" 44 45 47
+880 060 "Kamchatka" 00 45 46 48 49
+896 163 "Japan" 47 49
+790 130 "Mongolia" 44 45 47 48 4a
+800 180 "China" 41 42 43 44 49 4b
+800 240 "Siam" 41 4a 50
 
 "Australia" 2:
-840 300 "Indonesia"
-930 320 "New Guinea"
-900 380 "Eastern Australia"
-850 400 "Western Australia"
+840 300 "Indonesia" 4b 51 52
+930 320 "New Guinea" 50 52 53
+900 380 "Eastern Australia" 51 53
+850 400 "Western Australia" 50 51 52
 

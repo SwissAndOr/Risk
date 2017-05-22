@@ -167,7 +167,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				List<int[]> connections = new ArrayList<>();
 				
 				int i = nameEnd + 2;
-				while (i < line.length()) {
+				while (i + 1 < line.length()) {
 					connections.add(new int[] {Character.getNumericValue(line.charAt(i)), Character.getNumericValue(line.charAt(i + 1))});
 					i += 2;
 				}
