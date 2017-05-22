@@ -1,0 +1,54 @@
+"North America" 5:
+070 060 "Alaska" 01
+150 065 "Northwest Territory" 00
+130 100 "Alberta"
+110 150 "Western United States"
+115 210 "Central America"
+180 160 "Eastern United States"
+200 100 "Ontario"
+260 100 "Quebec"
+370 040 "Greenland"
+
+"South America" 2:
+210 280 "Venezuela"
+220 350 "Peru"
+250 420 "Argentina"
+290 340 "Brazil"
+
+"Europe" 5:
+410 060 "Iceland"
+450 100 "Great Britain"
+460 130 "Western Europe"
+530 140 "Southern Europe"
+500 110 "Northern Europe"
+490 070 "Scandinavia"
+570 100 "Ukraine"
+
+"Africa" 3:
+460 240 "North Africa"
+530 300 "Congo"
+530 390 "South Africa"
+605 365 "Madagascar"
+560 250 "East Africa"
+530 200 "Egypt"
+
+"Asia" 7:
+600 170 "Middle East"
+715 210 "India"
+650 130 "Afghanistan"
+650 080 "Ural"
+710 070 "Siberia"
+770 100 "Irkutsk"
+800 070 "Yakutsk"
+880 060 "Kamchatka"
+896 163 "Japan"
+790 130 "Mongolia"
+800 180 "China"
+800 240 "Siam"
+
+"Australia" 2:
+840 300 "Indonesia"
+930 320 "New Guinea"
+900 380 "Eastern Australia"
+850 400 "Western Australia"
+
