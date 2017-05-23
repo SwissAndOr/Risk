@@ -6,7 +6,7 @@ public class Territory {
 
     public static List<Territory> territories = new ArrayList<>();
 
-    public final String name;
+    private final String name;
     public final Color color;
     public final int x, y;
     public List<Territory> connections;
@@ -32,6 +32,10 @@ public class Territory {
 		}
 		
 		return null;
+    }
+    
+    public String toString() {
+    	return name;
     }
     
     public Player getOwner() {

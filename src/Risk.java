@@ -26,7 +26,9 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		CLAIM,
 		DRAFT,
 		ATTACK,
-		FORTIFY
+		ATTACKING,
+		MOVING,
+		FORTIFY;
 	}
 	
 	public static Risk game;
@@ -35,7 +37,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	private Phase phase = Phase.CLAIM;
 	private Player currentPlayer;
 	private List<Player> players = new ArrayList<>();
-	private Territory selected;
+	private Territory selected, defending;
 	private List<Card> deck = new ArrayList<>();
 	
 	private int unclaimed;
@@ -50,7 +52,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 			return;
 		}
 		
-		setPreferredSize(new Dimension(map.getWidth(null), map.getHeight(null)));
+		setPreferredSize(new Dimension(map.getWidth(), map.getHeight()));
 		addMouseListener(this);
 		addKeyListener(this);
 		setFocusable(true);
@@ -62,7 +64,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		
 		Color[] playerColors = {Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.BLACK};
 		for (int i = 0; i < playerAmount; i++) {
-			players.add(new Player(playerColors[i], (int) Math.ceil(42f / playerAmount)));//50 - 5 * playerAmount));
+			players.add(new Player(playerColors[i], (int) Math.ceil(42f / playerAmount) - 13));//50 - 5 * playerAmount));
 		}
 		currentPlayer = players.get(0);
 		
@@ -144,6 +146,25 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 			}
 		}
 		
+		if (phase == Phase.ATTACKING) {
+			final int boxWidth = 300, boxHeight = 110;
+			g.setColor(Color.WHITE);
+			g.fillRect(map.getWidth() / 2 - boxWidth / 2, map.getHeight() / 2 - boxHeight / 2, boxWidth, boxHeight);
+			g.setColor(Color.BLACK);
+			g.drawRect(map.getWidth() / 2 - boxWidth / 2, map.getHeight() / 2 - boxHeight / 2, boxWidth, boxHeight);
+		
+			g.drawString(selected.toString(), map.getWidth() / 2 - 80 - g.getFontMetrics().stringWidth(selected.toString()) / 2, map.getHeight() / 2 - 30);
+			g.drawString(defending.toString(), map.getWidth() / 2 + 80 - g.getFontMetrics().stringWidth(defending.toString()) / 2, map.getHeight() / 2 - 30);
+			g.drawString("→", map.getWidth() / 2 - g.getFontMetrics().stringWidth("→") / 2, map.getHeight() / 2 - 30);
+		
+			final int squareLength = 40, gap = 15;
+			for (int i = -1; i < 2; i++) {
+				g.setColor(Color.LIGHT_GRAY);
+				g.fillRect(map.getWidth() / 2 - squareLength / 2 - i * (squareLength + gap), map.getHeight() / 2 - squareLength / 2, squareLength, squareLength);
+				g.setColor(Color.BLACK);
+				g.drawRect(map.getWidth() / 2 - squareLength / 2 - i * (squareLength + gap), map.getHeight() / 2 - squareLength / 2, squareLength, squareLength);
+			}
+		}
 	}
 	
 	private boolean loadTerritories() {
@@ -269,53 +290,56 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				break;
 			case ATTACK:
 				if (clicked.getOwner() == currentPlayer) {
-					if (selected != clicked) {
-						if (selected != null) {
-							selected.ghostArmies = 0;
-						}
-						selected = clicked;
-					}
-					
-					if (e.getButton() == MouseEvent.BUTTON1) {
-						selected.ghostArmies = Math.min(3, Math.min(selected.armies - 1, selected.ghostArmies + 1));
-					} else if (e.getButton() == MouseEvent.BUTTON3) {
-						selected.ghostArmies = Math.max(0, selected.ghostArmies - 1);
-					}
-					if (selected.ghostArmies == 0) {
-						selected = null;
-					}
+					selected = clicked;
+//					if (selected != clicked) {
+//						if (selected != null) {
+//							selected.ghostArmies = 0;
+//						}
+//						selected = clicked;
+//					}
+//					
+//					if (e.getButton() == MouseEvent.BUTTON1) {
+//						selected.ghostArmies = Math.min(3, Math.min(selected.armies - 1, selected.ghostArmies + 1));
+//					} else if (e.getButton() == MouseEvent.BUTTON3) {
+//						selected.ghostArmies = Math.max(0, selected.ghostArmies - 1);
+//					}
+//					if (selected.ghostArmies == 0) {
+//						selected = null;
+//					}
 				} else if (selected != null && selected.connections.contains(clicked)) {
-					selected.armies -= selected.ghostArmies;
-					int defenderDice = Math.min(2, clicked.armies);
-					List<Integer> attacker = new ArrayList<>(), defender = new ArrayList<>();
-					for (int i = 0; i < selected.ghostArmies; i++) {
-						attacker.add((int)(Math.random() * 6 + 1));
-					}
-					for (int i = 0; i < defenderDice; i++) {
-						defender.add((int)(Math.random() * 6 + 1));
-					}
-					Collections.sort(attacker, Collections.reverseOrder());
-					Collections.sort(defender, Collections.reverseOrder());
-					for (int i = 0; i < Math.min(attacker.size(), defender.size()); i++) {
-						if (attacker.get(i) > defender.get(i)) {
-							clicked.armies--;
-						} else {
-							selected.ghostArmies--;
-						}
-					}
-					
-					if (clicked.armies == 0) { // TODO: Move more than the attacking armies
-						if (clicked.getOwner().getTerritories().size() == 1) {
-							players.remove(clicked.getOwner());
-						}
-						clicked.setOwner(currentPlayer);
-						clicked.armies += selected.ghostArmies;
-						capturedTerritory = true;
-					} else {
-						selected.armies += selected.ghostArmies;
-					}
-					selected.ghostArmies = 0;
-					selected = null;
+					defending = clicked;
+					phase = Phase.ATTACKING;
+//					selected.armies -= selected.ghostArmies;
+//					int defenderDice = Math.min(2, clicked.armies);
+//					List<Integer> attacker = new ArrayList<>(), defender = new ArrayList<>();
+//					for (int i = 0; i < selected.ghostArmies; i++) {
+//						attacker.add((int)(Math.random() * 6 + 1));
+//					}
+//					for (int i = 0; i < defenderDice; i++) {
+//						defender.add((int)(Math.random() * 6 + 1));
+//					}
+//					Collections.sort(attacker, Collections.reverseOrder());
+//					Collections.sort(defender, Collections.reverseOrder());
+//					for (int i = 0; i < Math.min(attacker.size(), defender.size()); i++) {
+//						if (attacker.get(i) > defender.get(i)) {
+//							clicked.armies--;
+//						} else {
+//							selected.ghostArmies--;
+//						}
+//					}
+//					
+//					if (clicked.armies == 0) { // TODO: Move more than the attacking armies
+//						if (clicked.getOwner().getTerritories().size() == 1) {
+//							players.remove(clicked.getOwner());
+//						}
+//						clicked.setOwner(currentPlayer);
+//						clicked.armies += selected.ghostArmies;
+//						capturedTerritory = true;
+//					} else {
+//						selected.armies += selected.ghostArmies;
+//					}
+//					selected.ghostArmies = 0;
+//					selected = null;
 				}
 				break;
 			case FORTIFY:
