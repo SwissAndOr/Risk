@@ -94,6 +94,15 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		g.fillRect(map.getWidth() / 2 - 15, map.getHeight() - 40, 30, 30);
 		g.setColor(Color.BLACK);
 		g.drawString(phase.toString(), map.getWidth() / 2 - 20, map.getHeight() - 45);
+		g.drawString("Territories: " + currentPlayer.getTerritories().size(), map.getWidth() / 2 + 20, map.getHeight() - 34);
+		g.drawString("Continent Bonuses: " + currentPlayer.getContinents().stream().mapToInt(c -> c.bonus).sum(), map.getWidth() / 2 + 20, map.getHeight() - 22);
+		g.drawString("Cards: " + currentPlayer.hand.size(), map.getWidth() / 2 + 20, map.getHeight() - 10);
+		
+		if (phase == Phase.CLAIM) {
+			g.drawString(currentPlayer.claims + " claims left", map.getWidth() / 2 - 100, map.getHeight() - 22);
+		} else if (phase == Phase.DRAFT) {
+			g.drawString(draftsLeft + " drafts left", map.getWidth() / 2 - 100, map.getHeight() - 22);
+		}
 		
 		if (selected != null) {
 			g.setColor(Color.BLACK);
@@ -117,12 +126,12 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		}
 		
 		for (Territory territory : Territory.territories) {		
-			if (territory.owner == null) continue;
+			if (territory.getOwner() == null) continue;
 			g.setColor(Color.WHITE);
 			g.fillRect(territory.x - 5, territory.y - 12, territory.armies < 10 ? 15 : 23, 14);
 			g.setColor(Color.BLACK);
 			g.drawRect(territory.x - 5, territory.y - 12, territory.armies < 10 ? 15 : 23, 14);
-			g.setColor(territory.owner.color);
+			g.setColor(territory.getOwner().color);
 			g.drawString(territory.armies + "", territory.x, territory.y);
 
 			if (territory.ghostArmies != 0) {
@@ -169,7 +178,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				int i = nameEnd + 2;
 				while (i + 1 < line.length()) {
 					connections.add(new int[] {Character.getNumericValue(line.charAt(i)), Character.getNumericValue(line.charAt(i + 1))});
-					i += 2;
+					i += 3;
 				}
 								
 				Territory newTerritory = new Territory(line.substring(yEnd + 2, nameEnd), Integer.parseInt(line.substring(0, xEnd)), Integer.parseInt(line.substring(xEnd + 1, yEnd)));
@@ -227,20 +236,25 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		if (clicked == null) return;
 		switch (phase) {
 			case CLAIM:
-				if (clicked.owner == null) {
-					clicked.owner = currentPlayer;
+				if (clicked.getOwner() == null) {
+					clicked.setOwner(currentPlayer);
 					currentPlayer.claims--;
 					unclaimed--;
 					nextPlayer();
-				} else if (unclaimed == 0 && clicked.owner == currentPlayer) {
+					if(currentPlayer.claims <= 0) {
+						phase = Phase.DRAFT;
+					}
+				} else if (unclaimed == 0 && clicked.getOwner() == currentPlayer) {
 					clicked.armies++;
-					if(nextPlayer() && --currentPlayer.claims <= 0) {
+					currentPlayer.claims--;
+					nextPlayer();
+					if(currentPlayer.claims <= 0) {
 						phase = Phase.DRAFT;
 					}
 				}
 				break;
 			case DRAFT:
-				if (clicked.owner != currentPlayer) return;
+				if (clicked.getOwner() != currentPlayer) return;
 				if (e.getButton() == MouseEvent.BUTTON1) {
 					if (draftsLeft > 0) {
 						clicked.ghostArmies++;
@@ -254,7 +268,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				}
 				break;
 			case ATTACK:
-				if (clicked.owner == currentPlayer) {
+				if (clicked.getOwner() == currentPlayer) {
 					if (selected != clicked) {
 						if (selected != null) {
 							selected.ghostArmies = 0;
@@ -291,7 +305,10 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					}
 					
 					if (clicked.armies == 0) { // TODO: Move more than the attacking armies
-						clicked.owner = currentPlayer;
+						if (clicked.getOwner().getTerritories().size() == 1) {
+							players.remove(clicked.getOwner());
+						}
+						clicked.setOwner(currentPlayer);
 						clicked.armies += selected.ghostArmies;
 						capturedTerritory = true;
 					} else {
@@ -302,7 +319,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				}
 				break;
 			case FORTIFY:
-				if (clicked.owner != currentPlayer) return;
+				if (clicked.getOwner() != currentPlayer) return;
 				if (e.getButton() == MouseEvent.BUTTON1 || e.getButton() == MouseEvent.BUTTON3) {
 					if (selected != clicked) {
 						if (selected != null) {
@@ -319,7 +336,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					if (selected.ghostArmies == 0) {
 						selected = null;
 					}
-				} else if (e.getButton() == MouseEvent.BUTTON2 && selected.connections.contains(clicked)) {
+				} else if (selected != null && e.getButton() == MouseEvent.BUTTON2 && selected.connections.contains(clicked)) {
 					selected.armies -= selected.ghostArmies;
 					clicked.armies += selected.ghostArmies;
 					selected.ghostArmies = 0;

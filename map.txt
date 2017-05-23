@@ -33,7 +33,7 @@
 530 200 "Egypt" 23 30 34 40
 
 "Asia" 7:
-600 170 "Middle East" 23 26 34 40 41 42
+600 170 "Middle East" 23 26 34 35 41 42
 715 210 "India" 40 42 4a 4b
 650 130 "Afghanistan" 26 40 41 43 4a
 650 080 "Ural" 26 42 44 4a
@@ -47,7 +47,7 @@
 800 240 "Siam" 41 4a 50
 
 "Australia" 2:
-840 300 "Indonesia" 4b 51 52
+840 300 "Indonesia" 4b 51 53
 930 320 "New Guinea" 50 52 53
 900 380 "Eastern Australia" 51 53
 850 400 "Western Australia" 50 51 52

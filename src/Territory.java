@@ -12,7 +12,7 @@ public class Territory {
     public List<Territory> connections;
     public int armies = 1;
     public int ghostArmies = 0;
-    public Player owner;
+    private Player owner;
     
     public Territory(String name, int x, int y) {       
     	this.name = name;
@@ -32,6 +32,19 @@ public class Territory {
 		}
 		
 		return null;
+    }
+    
+    public Player getOwner() {
+    	return owner;
+    }
+    
+    public void setOwner(Player player) {
+    	Player oldOwner = owner;
+    	owner = player;
+    	if (oldOwner != null) {
+    		oldOwner.updateTerritories();
+    	}
+    	owner.updateTerritories();
     }
 
 }
