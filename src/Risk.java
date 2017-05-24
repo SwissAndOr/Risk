@@ -42,6 +42,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	private DiceMenu diceMenu;
 	private ResultMenu resultMenu;
 	private MoveMenu moveMenu;
+	private CardMenu cardMenu;
 	private List<Card> deck = new ArrayList<>();
 	
 	private int unclaimed;
@@ -65,6 +66,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		
 		loadTerritories();
 		loadDeck();
+		cardMenu = new CardMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 180);
 		
 		Color[] playerColors = {Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.BLACK};
 		for (int i = 0; i < playerAmount; i++) {
@@ -151,9 +153,17 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 			}
 		}
 		
+		final int barX = map.getWidth() / 2 + 175, barWidth = 100, barHeight = 30;
+		g.setColor(Color.WHITE);
+		g.fillRect(barX, map.getHeight() - barHeight, barWidth, barHeight);
+		g.setColor(Color.BLACK);
+		g.drawRect(barX, map.getHeight()- barHeight, barWidth, barHeight);
+		g.drawString("Cards", barX + barWidth / 2 - g.getFontMetrics().stringWidth("Cards") / 2, map.getHeight() - barHeight / 2 + g.getFontMetrics().getAscent() / 2);
+		
 		if (diceMenu != null) diceMenu.paint(g, getMousePosition());
 		if (resultMenu != null) resultMenu.paint(g);
 		if (moveMenu != null) moveMenu.paint(g);
+		if (cardMenu.isEnabled()) cardMenu.paint(g, currentPlayer.hand);
 	}
 	
 	private boolean loadTerritories() {
@@ -263,6 +273,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		
 		if (defending.armies == 0) {
 			if (defending.getOwner().getTerritories().size() == 1) {
+				currentPlayer.hand.addAll(defending.getOwner().hand);
 				players.remove(defending.getOwner());
 			}
 			defending.setOwner(currentPlayer);
@@ -274,6 +285,24 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	
 	@Override
 	public void mouseClicked(MouseEvent e) {
+		if (diceMenu != null || resultMenu != null || moveMenu != null || cardMenu.isEnabled()) {
+			switch (phase) {
+				case ATTACKING:
+					if (e.getButton() == MouseEvent.BUTTON1 && diceMenu.click(getMousePosition())) {
+						currentPlayer = diceMenu.getDefending().getOwner();
+						phase = Phase.DEFENDING;
+					}
+					break;
+				case DEFENDING:
+					if (e.getButton() == MouseEvent.BUTTON1 && diceMenu.click(getMousePosition())) {
+						currentPlayer = diceMenu.getAttacking().getOwner();
+						phase = Phase.ATTACK;
+						attack(diceMenu.getAttacking(), diceMenu.getDefending(), diceMenu.getAttackingArmies(), diceMenu.getDefendingArmies());
+					}
+					break;
+			}
+			return;
+		}
 		Territory clicked = Territory.search(e.getX(), e.getY());
 		if (clicked == null) return;
 		switch (phase) {
@@ -310,25 +339,11 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				}
 				break;
 			case ATTACK:
-				if (resultMenu != null || moveMenu != null) return;
 				if (clicked.getOwner() == currentPlayer) {
 					selected = clicked;
 				} else if (selected != null && selected.connections.contains(clicked)) {
 					diceMenu = new DiceMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 110, selected, clicked);
 					phase = Phase.ATTACKING;
-				}
-				break;
-			case ATTACKING:
-				if (e.getButton() == MouseEvent.BUTTON1 && diceMenu.click(getMousePosition())) {
-					currentPlayer = diceMenu.getDefending().getOwner();
-					phase = Phase.DEFENDING;
-				}
-				break;
-			case DEFENDING:
-				if (e.getButton() == MouseEvent.BUTTON1 && diceMenu.click(getMousePosition())) {
-					currentPlayer = diceMenu.getAttacking().getOwner();
-					phase = Phase.ATTACK;
-					attack(diceMenu.getAttacking(), diceMenu.getDefending(), diceMenu.getAttackingArmies(), diceMenu.getDefendingArmies());
 				}
 				break;
 			case FORTIFY:

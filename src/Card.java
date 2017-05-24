@@ -16,6 +16,10 @@ public class Card {
 		this.design = design;
 	}
 	
+	public String toString() {
+		return (design == Design.WILD ? design.toString() : territory.toString() + " (" + design.toString() + ")");
+	}
+	
 	public Territory getTerritory() {
 		return territory;
 	}
