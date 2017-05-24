@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -27,7 +28,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		DRAFT,
 		ATTACK,
 		ATTACKING,
-		MOVING,
+		DEFENDING,
 		FORTIFY;
 	}
 	
@@ -37,7 +38,10 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	private Phase phase = Phase.CLAIM;
 	private Player currentPlayer;
 	private List<Player> players = new ArrayList<>();
-	private Territory selected, defending;
+	private Territory selected;
+	private DiceMenu diceMenu;
+	private ResultMenu resultMenu;
+	private MoveMenu moveMenu;
 	private List<Card> deck = new ArrayList<>();
 	
 	private int unclaimed;
@@ -90,6 +94,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	@Override
 	public void paint(Graphics gg) {
 		Graphics2D g = (Graphics2D) gg;
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.drawImage(map, 0, 0, null);
 
 		g.setColor(currentPlayer.color);
@@ -146,25 +151,9 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 			}
 		}
 		
-		if (phase == Phase.ATTACKING) {
-			final int boxWidth = 300, boxHeight = 110;
-			g.setColor(Color.WHITE);
-			g.fillRect(map.getWidth() / 2 - boxWidth / 2, map.getHeight() / 2 - boxHeight / 2, boxWidth, boxHeight);
-			g.setColor(Color.BLACK);
-			g.drawRect(map.getWidth() / 2 - boxWidth / 2, map.getHeight() / 2 - boxHeight / 2, boxWidth, boxHeight);
-		
-			g.drawString(selected.toString(), map.getWidth() / 2 - 80 - g.getFontMetrics().stringWidth(selected.toString()) / 2, map.getHeight() / 2 - 30);
-			g.drawString(defending.toString(), map.getWidth() / 2 + 80 - g.getFontMetrics().stringWidth(defending.toString()) / 2, map.getHeight() / 2 - 30);
-			g.drawString("→", map.getWidth() / 2 - g.getFontMetrics().stringWidth("→") / 2, map.getHeight() / 2 - 30);
-		
-			final int squareLength = 40, gap = 15;
-			for (int i = -1; i < 2; i++) {
-				g.setColor(Color.LIGHT_GRAY);
-				g.fillRect(map.getWidth() / 2 - squareLength / 2 - i * (squareLength + gap), map.getHeight() / 2 - squareLength / 2, squareLength, squareLength);
-				g.setColor(Color.BLACK);
-				g.drawRect(map.getWidth() / 2 - squareLength / 2 - i * (squareLength + gap), map.getHeight() / 2 - squareLength / 2, squareLength, squareLength);
-			}
-		}
+		if (diceMenu != null) diceMenu.paint(g, getMousePosition());
+		if (resultMenu != null) resultMenu.paint(g);
+		if (moveMenu != null) moveMenu.paint(g);
 	}
 	
 	private boolean loadTerritories() {
@@ -251,6 +240,38 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		return players.indexOf(currentPlayer) == 0;
 	}
 	
+	private void attack(Territory attacking, Territory defending, int attackingArmies, int defendingArmies) {
+		final int origAtt = attacking.armies, origDef = defending.armies;
+		List<Integer> attacker = new ArrayList<>(), defender = new ArrayList<>();
+		for (int i = 0; i < attackingArmies; i++) {
+			attacker.add((int)(Math.random() * 6 + 1));
+		}
+		for (int i = 0; i < defendingArmies; i++) {
+			defender.add((int)(Math.random() * 6 + 1));
+		}
+		Collections.sort(attacker, Collections.reverseOrder());
+		Collections.sort(defender, Collections.reverseOrder());
+		for (int i = 0; i < Math.min(attacker.size(), defender.size()); i++) {
+			if (attacker.get(i) > defender.get(i)) {
+				defending.armies--;
+			} else {
+				attacking.armies--;
+			}
+		}
+		
+		resultMenu = new ResultMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 180, diceMenu.getAttacking(), diceMenu.getDefending(), attacker, defender, origAtt, origDef);
+		
+		if (defending.armies == 0) {
+			if (defending.getOwner().getTerritories().size() == 1) {
+				players.remove(defending.getOwner());
+			}
+			defending.setOwner(currentPlayer);
+			capturedTerritory = true;
+		}
+		diceMenu = null;
+		selected = null;
+	}
+	
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		Territory clicked = Territory.search(e.getX(), e.getY());
@@ -289,84 +310,34 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				}
 				break;
 			case ATTACK:
+				if (resultMenu != null || moveMenu != null) return;
 				if (clicked.getOwner() == currentPlayer) {
 					selected = clicked;
-//					if (selected != clicked) {
-//						if (selected != null) {
-//							selected.ghostArmies = 0;
-//						}
-//						selected = clicked;
-//					}
-//					
-//					if (e.getButton() == MouseEvent.BUTTON1) {
-//						selected.ghostArmies = Math.min(3, Math.min(selected.armies - 1, selected.ghostArmies + 1));
-//					} else if (e.getButton() == MouseEvent.BUTTON3) {
-//						selected.ghostArmies = Math.max(0, selected.ghostArmies - 1);
-//					}
-//					if (selected.ghostArmies == 0) {
-//						selected = null;
-//					}
 				} else if (selected != null && selected.connections.contains(clicked)) {
-					defending = clicked;
+					diceMenu = new DiceMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 110, selected, clicked);
 					phase = Phase.ATTACKING;
-//					selected.armies -= selected.ghostArmies;
-//					int defenderDice = Math.min(2, clicked.armies);
-//					List<Integer> attacker = new ArrayList<>(), defender = new ArrayList<>();
-//					for (int i = 0; i < selected.ghostArmies; i++) {
-//						attacker.add((int)(Math.random() * 6 + 1));
-//					}
-//					for (int i = 0; i < defenderDice; i++) {
-//						defender.add((int)(Math.random() * 6 + 1));
-//					}
-//					Collections.sort(attacker, Collections.reverseOrder());
-//					Collections.sort(defender, Collections.reverseOrder());
-//					for (int i = 0; i < Math.min(attacker.size(), defender.size()); i++) {
-//						if (attacker.get(i) > defender.get(i)) {
-//							clicked.armies--;
-//						} else {
-//							selected.ghostArmies--;
-//						}
-//					}
-//					
-//					if (clicked.armies == 0) { // TODO: Move more than the attacking armies
-//						if (clicked.getOwner().getTerritories().size() == 1) {
-//							players.remove(clicked.getOwner());
-//						}
-//						clicked.setOwner(currentPlayer);
-//						clicked.armies += selected.ghostArmies;
-//						capturedTerritory = true;
-//					} else {
-//						selected.armies += selected.ghostArmies;
-//					}
-//					selected.ghostArmies = 0;
-//					selected = null;
+				}
+				break;
+			case ATTACKING:
+				if (e.getButton() == MouseEvent.BUTTON1 && diceMenu.click(getMousePosition())) {
+					currentPlayer = diceMenu.getDefending().getOwner();
+					phase = Phase.DEFENDING;
+				}
+				break;
+			case DEFENDING:
+				if (e.getButton() == MouseEvent.BUTTON1 && diceMenu.click(getMousePosition())) {
+					currentPlayer = diceMenu.getAttacking().getOwner();
+					phase = Phase.ATTACK;
+					attack(diceMenu.getAttacking(), diceMenu.getDefending(), diceMenu.getAttackingArmies(), diceMenu.getDefendingArmies());
 				}
 				break;
 			case FORTIFY:
-				if (clicked.getOwner() != currentPlayer) return;
-				if (e.getButton() == MouseEvent.BUTTON1 || e.getButton() == MouseEvent.BUTTON3) {
-					if (selected != clicked) {
-						if (selected != null) {
-							selected.ghostArmies = 0;
-						}
-						selected = clicked;
-					}
-					
-					if (e.getButton() == MouseEvent.BUTTON1) {
-						selected.ghostArmies = Math.min(selected.armies - 1, selected.ghostArmies + 1);
-					} else if (e.getButton() == MouseEvent.BUTTON3) {
-						selected.ghostArmies = Math.max(0, selected.ghostArmies - 1);
-					}
-					if (selected.ghostArmies == 0) {
-						selected = null;
-					}
-				} else if (selected != null && e.getButton() == MouseEvent.BUTTON2 && selected.connections.contains(clicked)) {
-					selected.armies -= selected.ghostArmies;
-					clicked.armies += selected.ghostArmies;
-					selected.ghostArmies = 0;
+				if (clicked.getOwner() != currentPlayer || e.getButton() != MouseEvent.BUTTON1) return;
+				if (selected == null) {
+					selected = clicked;
+				} else if (selected.connections.contains(clicked)) {
+					moveMenu = new MoveMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 110, selected, clicked, clicked.armies - 1, true);
 					selected = null;
-					phase = Phase.DRAFT;
-					nextPlayer();
 				}
 				break;
 		}
@@ -387,6 +358,17 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+			if (moveMenu != null) {
+				moveMenu.getSource().armies -= moveMenu.getAmount();
+				moveMenu.getDestination().armies += moveMenu.getAmount();
+				moveMenu = null;
+				if (phase == Phase.FORTIFY) {
+					phase = Phase.DRAFT;
+					selected = null;
+					nextPlayer();
+				}				
+				return;
+			}
 			switch (phase) {
 				case DRAFT:
 					if (draftsLeft > 0) return;
@@ -397,6 +379,16 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					phase = Phase.ATTACK;
 					break;
 				case ATTACK:
+					if (resultMenu != null) {
+						if (resultMenu.getDefending().armies == 0) {
+							moveMenu = new MoveMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 110, resultMenu.getAttacking(), resultMenu.getDefending(), resultMenu.getMin(), false);
+						} else {
+							diceMenu = new DiceMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 110, resultMenu.getAttacking(), resultMenu.getDefending());
+							phase = Phase.ATTACKING;
+						}
+						resultMenu = null;
+						return;
+					}
 					phase = Phase.FORTIFY;
 					if (selected != null) {
 						selected.ghostArmies = 0;
@@ -409,13 +401,20 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					break;
 				case FORTIFY:
 					phase = Phase.DRAFT;
-					if (selected != null) {
-						selected.ghostArmies = 0;
-						selected = null;
-					}
+					selected = null;
 					nextPlayer();
 					break;
-		}
+			}
+		} else if (moveMenu != null && (e.getKeyChar() == '+' || e.getKeyChar() == '-')) {
+			moveMenu.setAmount(moveMenu.getAmount() + (e.getKeyChar() == '+' ? 1 : -1));
+		} else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			selected = null;
+			if (diceMenu != null && !diceMenu.pastNoReturn()) {
+				diceMenu = null;
+				phase = Phase.ATTACK;
+			} else if (moveMenu != null && moveMenu.isCloseable()) {
+				moveMenu = null;
+			}
 		}
 	}
 
