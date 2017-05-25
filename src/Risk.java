@@ -74,6 +74,10 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		}
 		currentPlayer = players.get(0);
 		
+		currentPlayer.hand.add(deck.remove(0));
+		currentPlayer.hand.add(deck.remove(0));
+		currentPlayer.hand.add(deck.remove(0));
+		
 		new Thread(loop(60)).start();
 	}
 	
@@ -158,12 +162,12 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		g.fillRect(barX, map.getHeight() - barHeight, barWidth, barHeight);
 		g.setColor(Color.BLACK);
 		g.drawRect(barX, map.getHeight()- barHeight, barWidth, barHeight);
-		g.drawString("Cards", barX + barWidth / 2 - g.getFontMetrics().stringWidth("Cards") / 2, map.getHeight() - barHeight / 2 + g.getFontMetrics().getAscent() / 2);
+		g.drawString(cardMenu.isEnabled() ? "V Cards V" : "^ Cards ^", barX + barWidth / 2 - g.getFontMetrics().stringWidth("Cards") / 2, map.getHeight() - barHeight / 2 + g.getFontMetrics().getAscent() / 2);
 		
 		if (diceMenu != null) diceMenu.paint(g, getMousePosition());
 		if (resultMenu != null) resultMenu.paint(g);
 		if (moveMenu != null) moveMenu.paint(g);
-		if (cardMenu.isEnabled()) cardMenu.paint(g, currentPlayer.hand);
+		if (cardMenu.isEnabled()) cardMenu.paint(g);
 	}
 	
 	private boolean loadTerritories() {
@@ -285,6 +289,16 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	
 	@Override
 	public void mouseClicked(MouseEvent e) {
+		if (e.getButton() == MouseEvent.BUTTON1) {
+			final int barX = map.getWidth() / 2 + 175, barWidth = 100, barHeight = 30;
+			if (e.getX() >= barX && e.getX() <= barX + barWidth && e.getY() >= map.getHeight() - barHeight) {
+				if (cardMenu.isEnabled()) {
+					cardMenu.disable();
+				} else {
+					cardMenu.enable(currentPlayer);
+				}
+			}
+		}
 		if (diceMenu != null || resultMenu != null || moveMenu != null || cardMenu.isEnabled()) {
 			switch (phase) {
 				case ATTACKING:
@@ -299,6 +313,10 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 						phase = Phase.ATTACK;
 						attack(diceMenu.getAttacking(), diceMenu.getDefending(), diceMenu.getAttackingArmies(), diceMenu.getDefendingArmies());
 					}
+					break;
+				case DRAFT:
+					if (!cardMenu.isEnabled()) return;
+					
 					break;
 			}
 			return;
