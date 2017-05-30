@@ -6,7 +6,8 @@ public class Main {
 		JFrame window = new JFrame("Risk");
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setResizable(false);
-		window.add(new Risk(3));
+		int players = args.length > 0 ? Math.min(5, Math.max(2, Integer.parseInt(args[0]))) : 3;
+		window.add(new Risk(players));
 		window.pack();
 		window.setVisible(true);
 	}

@@ -6,14 +6,15 @@ import java.util.stream.Collectors;
 public class Player {
 
 	final public Color color;
+	final public Color textColor;
 	public List<Card> hand = new ArrayList<>();
-	private int completedSets;
 	private List<Territory> territories;
 	private List<Continent> continents;
 	public int claims;
 	
-	public Player(Color color, int claims) {
+	public Player(Color color, Color textColor, int claims) {
 		this.color = color;
+		this.textColor = textColor;
 		this.claims = claims;
 		updateTerritories();
 	}

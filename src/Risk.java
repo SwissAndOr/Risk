@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -48,6 +49,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	private int unclaimed;
 	private int draftsLeft;
 	private boolean capturedTerritory;
+	public int setsCompleted = 0;
 	
 	public Risk(int playerAmount) {
 		try {
@@ -69,14 +71,11 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		cardMenu = new CardMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 180);
 		
 		Color[] playerColors = {Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.BLACK};
+		Color[] playerTextColors = {Color.WHITE, Color.WHITE, Color.BLACK, Color.BLACK, Color.WHITE};
 		for (int i = 0; i < playerAmount; i++) {
-			players.add(new Player(playerColors[i], (int) Math.ceil(42f / playerAmount) - 13));//50 - 5 * playerAmount));
+			players.add(new Player(playerColors[i], playerTextColors[i], 50 - 5 * playerAmount));
 		}
 		currentPlayer = players.get(0);
-		
-		currentPlayer.hand.add(deck.remove(0));
-		currentPlayer.hand.add(deck.remove(0));
-		currentPlayer.hand.add(deck.remove(0));
 		
 		new Thread(loop(60)).start();
 	}
@@ -91,7 +90,6 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				if (currentTime - previousTime >= 1000 / FPS) {
 					previousTime = currentTime;
 					repaint();
-					currentTime = System.currentTimeMillis();
 				}
 			}
 		};
@@ -110,6 +108,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		g.drawString("Territories: " + currentPlayer.getTerritories().size(), map.getWidth() / 2 + 20, map.getHeight() - 34);
 		g.drawString("Continent Bonuses: " + currentPlayer.getContinents().stream().mapToInt(c -> c.bonus).sum(), map.getWidth() / 2 + 20, map.getHeight() - 22);
 		g.drawString("Cards: " + currentPlayer.hand.size(), map.getWidth() / 2 + 20, map.getHeight() - 10);
+		g.drawString("Sets Completed: " + setsCompleted, map.getWidth() / 2 - 450, map.getHeight() - 10);
 		
 		if (phase == Phase.CLAIM) {
 			g.drawString(currentPlayer.claims + " claims left", map.getWidth() / 2 - 100, map.getHeight() - 22);
@@ -122,8 +121,9 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 			g.drawOval(selected.x - 15, selected.y - 15, 30, 30);
 		}
 		
-		if (getMousePosition() != null) {
-			Territory hovering = Territory.search(getMousePosition().x, getMousePosition().y);
+		Point mouse = getMousePosition();
+		if (mouse != null) {
+			Territory hovering = Territory.search(mouse.x, mouse.y);
 			if (hovering != null) {
 				g.setColor(Color.BLACK);
 				g.drawOval(hovering.x - 15, hovering.y - 15, 30, 30);
@@ -140,34 +140,42 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		
 		for (Territory territory : Territory.territories) {		
 			if (territory.getOwner() == null) continue;
-			g.setColor(Color.WHITE);
+			g.setColor(territory.getOwner().color);
 			g.fillRect(territory.x - 5, territory.y - 12, territory.armies < 10 ? 15 : 23, 14);
 			g.setColor(Color.BLACK);
 			g.drawRect(territory.x - 5, territory.y - 12, territory.armies < 10 ? 15 : 23, 14);
-			g.setColor(territory.getOwner().color);
+			g.setColor(territory.getOwner().textColor);
 			g.drawString(territory.armies + "", territory.x, territory.y);
 
 			if (territory.ghostArmies != 0) {
-				g.setColor(Color.WHITE);
+				g.setColor(territory.getOwner().color);
 				g.fillRect(territory.x - 5, territory.y + 3, territory.ghostArmies < 10 ? 15 : 23, 14);
 				g.setColor(Color.BLACK);
 				g.drawRect(territory.x - 5, territory.y + 3, territory.ghostArmies < 10 ? 15 : 23, 14);
-				g.setColor(currentPlayer.color);
+				g.setColor(territory.getOwner().textColor);
 				g.drawString(territory.ghostArmies + "", territory.x, territory.y + 15);
 			}
 		}
 		
 		final int barX = map.getWidth() / 2 + 175, barWidth = 100, barHeight = 30;
-		g.setColor(Color.WHITE);
+		if (mouse != null && mouse.getX() >= barX && mouse.getX() <= barX + barWidth && mouse.getY() >= map.getHeight() - barHeight) {
+			g.setColor(new Color(220, 220, 220));
+		} else {
+			g.setColor(Color.LIGHT_GRAY);
+		}
+		if ((currentPlayer.hand.size() >= 5 && phase == Phase.DRAFT) || currentPlayer.hand.size() == 0) {
+			g.setColor(new Color(120, 120, 120));
+		}
 		g.fillRect(barX, map.getHeight() - barHeight, barWidth, barHeight);
 		g.setColor(Color.BLACK);
 		g.drawRect(barX, map.getHeight()- barHeight, barWidth, barHeight);
-		g.drawString(cardMenu.isEnabled() ? "V Cards V" : "^ Cards ^", barX + barWidth / 2 - g.getFontMetrics().stringWidth("Cards") / 2, map.getHeight() - barHeight / 2 + g.getFontMetrics().getAscent() / 2);
+		final String cardTab = cardMenu.isEnabled() ? (char) 9660 + " Cards " + (char) 9660 : (char) 9650 + " Cards " + (char) 9650;
+		g.drawString(cardTab, barX + barWidth / 2 - g.getFontMetrics().stringWidth(cardTab) / 2, map.getHeight() - barHeight / 2 + g.getFontMetrics().getAscent() / 2);
 		
 		if (diceMenu != null) diceMenu.paint(g, getMousePosition());
 		if (resultMenu != null) resultMenu.paint(g);
 		if (moveMenu != null) moveMenu.paint(g);
-		if (cardMenu.isEnabled()) cardMenu.paint(g);
+		if (cardMenu.isEnabled()) cardMenu.paint(g, getMousePosition());
 	}
 	
 	private boolean loadTerritories() {
@@ -288,8 +296,11 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	}
 	
 	@Override
-	public void mouseClicked(MouseEvent e) {
-		if (e.getButton() == MouseEvent.BUTTON1) {
+	public void mouseClicked(MouseEvent e) { }
+	
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if (e.getButton() == MouseEvent.BUTTON1 && !(currentPlayer.hand.size() >= 5 && phase == Phase.DRAFT) && currentPlayer.hand.size() > 0) {
 			final int barX = map.getWidth() / 2 + 175, barWidth = 100, barHeight = 30;
 			if (e.getX() >= barX && e.getX() <= barX + barWidth && e.getY() >= map.getHeight() - barHeight) {
 				if (cardMenu.isEnabled()) {
@@ -316,7 +327,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					break;
 				case DRAFT:
 					if (!cardMenu.isEnabled()) return;
-					
+					draftsLeft += cardMenu.click(getMousePosition(), currentPlayer);
 					break;
 			}
 			return;
@@ -332,6 +343,9 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					nextPlayer();
 					if(currentPlayer.claims <= 0) {
 						phase = Phase.DRAFT;
+						if (currentPlayer.hand.size() >= 5) {
+							cardMenu.enable(currentPlayer);
+						}
 					}
 				} else if (unclaimed == 0 && clicked.getOwner() == currentPlayer) {
 					clicked.armies++;
@@ -339,6 +353,9 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					nextPlayer();
 					if(currentPlayer.claims <= 0) {
 						phase = Phase.DRAFT;
+						if (currentPlayer.hand.size() >= 5) {
+							cardMenu.enable(currentPlayer);
+						}
 					}
 				}
 				break;
@@ -386,9 +403,6 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	public void mousePressed(MouseEvent e) { }
 
 	@Override
-	public void mouseReleased(MouseEvent e) { }
-
-	@Override
 	public void keyPressed(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 			if (moveMenu != null) {
@@ -428,7 +442,9 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 						selected = null;
 					}
 					if (capturedTerritory) {
-						currentPlayer.hand.add(deck.remove(0));
+						if (deck.size() > 0) {
+							currentPlayer.hand.add(deck.remove(0));
+						}
 						capturedTerritory = false;
 					}
 					break;
@@ -436,6 +452,9 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					phase = Phase.DRAFT;
 					selected = null;
 					nextPlayer();
+					if (currentPlayer.hand.size() > 5) {
+						cardMenu.enable(currentPlayer);
+					}
 					break;
 			}
 		} else if (moveMenu != null && (e.getKeyChar() == '+' || e.getKeyChar() == '-')) {
