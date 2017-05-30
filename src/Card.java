@@ -5,7 +5,7 @@ public class Card {
 		INFANTRY,
 		CAVALRY,
 		ARTILLERY,
-		WILD;
+		WILD
 	}
 	
 	private Territory territory;
