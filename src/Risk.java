@@ -50,6 +50,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	private MoveMenu moveMenu;
 	private CardMenu cardMenu;
 	public List<Card> deck = new ArrayList<>();
+	private File save;
 	
 	public int unclaimed;
 	public int draftsLeft;
@@ -92,6 +93,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	public Risk(File save) {
 		this();
 		
+		this.save = save;
 		SaveManager.load(save);
 		
 		new Thread(loop(60)).start();
@@ -105,7 +107,10 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 				startTime = System.currentTimeMillis();
 				repaint();
 				try {
-					Thread.sleep((1000 / FPS) - (System.currentTimeMillis() - startTime));
+					long wait = (1000 / FPS) - (System.currentTimeMillis() - startTime);
+					if (wait > 0) {
+						Thread.sleep(wait);
+					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -431,10 +436,16 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		getActionMap().put("save", new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser chooser = new JFileChooser(".");
+				if (save != null) {
+					chooser.setCurrentDirectory(save);
+					chooser.setSelectedFile(new File(save.getName()));
+				}
 				chooser.setDialogTitle("Risk Game Saver");
-				chooser.setFileFilter(new FileNameExtensionFilter("Risk Saves", "save"));
+				chooser.setFileFilter(new FileNameExtensionFilter("Risk Saves", ".save"));
 				if (chooser.showSaveDialog(getParent()) == JFileChooser.APPROVE_OPTION) {
-					SaveManager.save(chooser.getSelectedFile());
+					File file = new File(chooser.getSelectedFile().getPath() + (chooser.getSelectedFile().getPath().toLowerCase().endsWith(".save") ? "" : ".save"));
+					save = file;
+					SaveManager.save(file);
 				}
 			}
 		});
