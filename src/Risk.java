@@ -441,7 +441,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					chooser.setSelectedFile(new File(save.getName()));
 				}
 				chooser.setDialogTitle("Risk Game Saver");
-				chooser.setFileFilter(new FileNameExtensionFilter("Risk Saves", ".save"));
+				chooser.setFileFilter(new FileNameExtensionFilter("Risk Saves", "save"));
 				if (chooser.showSaveDialog(getParent()) == JFileChooser.APPROVE_OPTION) {
 					File file = new File(chooser.getSelectedFile().getPath() + (chooser.getSelectedFile().getPath().toLowerCase().endsWith(".save") ? "" : ".save"));
 					save = file;
