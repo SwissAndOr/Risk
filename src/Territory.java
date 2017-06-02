@@ -51,4 +51,8 @@ public class Territory {
     	owner.updateTerritories();
     }
 
+    public void forceOwner(Player player) {
+    	owner = player;
+    }
+    
 }

@@ -12,9 +12,11 @@ public class Player {
 	private List<Continent> continents;
 	public int claims;
 	
-	public Player(Color color, Color textColor, int claims) {
-		this.color = color;
-		this.textColor = textColor;
+	public Player(int index, int claims) {
+		Color[] playerColors = {Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.BLACK, Color.MAGENTA};
+		Color[] playerTextColors = {Color.WHITE, Color.WHITE, Color.BLACK, Color.BLACK, Color.WHITE, Color.WHITE};
+		this.color = playerColors[index];
+		this.textColor = playerTextColors[index];
 		this.claims = claims;
 		updateTerritories();
 	}

@@ -4,6 +4,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -18,13 +19,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class Risk extends JPanel implements MouseListener, KeyListener {
 
-	private enum Phase {
+	public enum Phase {
 		CLAIM,
 		DRAFT,
 		ATTACK,
@@ -36,22 +42,22 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	public static Risk game;
 	
 	public BufferedImage map;
-	private Phase phase = Phase.CLAIM;
-	private Player currentPlayer;
-	private List<Player> players = new ArrayList<>();
+	public Phase phase = Phase.CLAIM;
+	public Player currentPlayer;
+	public List<Player> players = new ArrayList<>();
 	private Territory selected;
 	private DiceMenu diceMenu;
 	private ResultMenu resultMenu;
 	private MoveMenu moveMenu;
 	private CardMenu cardMenu;
-	private List<Card> deck = new ArrayList<>();
+	public List<Card> deck = new ArrayList<>();
 	
-	private int unclaimed;
-	private int draftsLeft;
-	private boolean capturedTerritory;
+	public int unclaimed;
+	public int draftsLeft;
+	public boolean capturedTerritory;
 	public int setsCompleted = 0;
 	
-	public Risk(int playerAmount) {
+	public Risk() {
 		try {
 			map = ImageIO.read(new File("map.png"));
 		} catch (IOException e) {
@@ -66,16 +72,28 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		requestFocus();
 		game = this;
 		
+		loadBindings();
 		loadTerritories();
-		loadDeck();
 		cardMenu = new CardMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 180);
+	}
+	
+	public Risk(int playerAmount) {
+		this();
 		
-		Color[] playerColors = {Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.BLACK};
-		Color[] playerTextColors = {Color.WHITE, Color.WHITE, Color.BLACK, Color.BLACK, Color.WHITE};
+		loadDeck();
+		
 		for (int i = 0; i < playerAmount; i++) {
-			players.add(new Player(playerColors[i], playerTextColors[i], 50 - 5 * playerAmount));
+			players.add(new Player(i, 50 - 5 * playerAmount));
 		}
 		currentPlayer = players.get(0);
+		
+		new Thread(loop(60)).start();
+	}
+	
+	public Risk(File save) {
+		this();
+		
+		SaveManager.load(save);
 		
 		new Thread(loop(60)).start();
 	}
@@ -103,6 +121,8 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 
 		g.setColor(currentPlayer.color);
 		g.fillRect(map.getWidth() / 2 - 15, map.getHeight() - 40, 30, 30);
+		g.setColor(Color.BLACK);
+		g.drawRect(map.getWidth() / 2 - 15, map.getHeight() - 40, 30, 30);
 		g.setColor(Color.BLACK);
 		g.drawString(phase.toString(), map.getWidth() / 2 - 20, map.getHeight() - 45);
 		g.drawString("Territories: " + currentPlayer.getTerritories().size(), map.getWidth() / 2 + 20, map.getHeight() - 34);
@@ -256,6 +276,10 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		Collections.shuffle(deck);
 	}
 
+	public int getPlayerIndex(Player player) {
+		return players.indexOf(player);
+	}
+	
 	private boolean nextPlayer() { // Returns whether it looped back to the first player
 		currentPlayer = players.get(players.indexOf(currentPlayer) < players.size() - 1 ? players.indexOf(currentPlayer) + 1 : 0);
 		draftsLeft = currentPlayer.getDrafts();
@@ -402,6 +426,20 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	@Override
 	public void mousePressed(MouseEvent e) { }
 
+	private void loadBindings() {
+		getInputMap().put(KeyStroke.getKeyStroke("control S"), "save");
+		getActionMap().put("save", new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser chooser = new JFileChooser(".");
+				chooser.setDialogTitle("Risk Game Saver");
+				chooser.setFileFilter(new FileNameExtensionFilter("Risk Saves", "save"));
+				if (chooser.showSaveDialog(getParent()) == JFileChooser.APPROVE_OPTION) {
+					SaveManager.save(chooser.getSelectedFile());
+				}
+			}
+		});
+	}
+	
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -469,7 +507,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 			}
 		}
 	}
-
+	
 	@Override
 	public void keyReleased(KeyEvent e) { }
 
