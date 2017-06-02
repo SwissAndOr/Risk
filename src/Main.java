@@ -1,5 +1,4 @@
 import java.awt.GridLayout;
-import java.nio.file.Paths;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;

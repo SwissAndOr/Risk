@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.function.Consumer;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -428,7 +427,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	public void mousePressed(MouseEvent e) { }
 
 	private void loadBindings() {
-		getInputMap().put(KeyStroke.getKeyStroke("control S"), "save");
+		getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control S"), "save");
 		getActionMap().put("save", new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser chooser = new JFileChooser(".");
