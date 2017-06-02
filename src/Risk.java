@@ -36,7 +36,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		ATTACK,
 		ATTACKING,
 		DEFENDING,
-		FORTIFY;
+		FORTIFY
 	}
 	
 	public static Risk game;
@@ -100,14 +100,15 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	
 	private Runnable loop(int FPS) {
 		return () -> {
-			long currentTime, previousTime = System.currentTimeMillis();
+			long startTime = System.currentTimeMillis();
 			
 			while (true) {
-				currentTime = System.currentTimeMillis();
-
-				if (currentTime - previousTime >= 1000 / FPS) {
-					previousTime = currentTime;
-					repaint();
+				startTime = System.currentTimeMillis();
+				repaint();
+				try {
+					Thread.sleep((1000 / FPS) - (System.currentTimeMillis() - startTime));
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
 		};
