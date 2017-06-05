@@ -1,8 +1,8 @@
 "North America" 5:
-070 060 "Alaska" 01 02 47
+070 060 "Alaska" 01 02 03 47
 150 065 "Northwest Territory" 00 01 06 08
 130 100 "Alberta" 00 01 03 06
-110 150 "Western United States" 02 04 05 06
+110 150 "Western United States" 01 02 04 05 06
 115 210 "Central America" 03 05 10
 180 160 "Eastern United States" 03 04 06 07
 200 100 "Ontario" 01 02 03 05 07 08

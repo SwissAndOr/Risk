@@ -77,7 +77,7 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		cardMenu = new CardMenu(map.getWidth() / 2, map.getHeight() / 2, 300, 180);
 	}
 	
-	public Risk(int playerAmount) {
+	public Risk(int playerAmount, int claiming) {
 		this();
 		
 		loadDeck();
@@ -85,7 +85,34 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 		for (int i = 0; i < playerAmount; i++) {
 			players.add(new Player(i, 50 - 5 * playerAmount));
 		}
+		Collections.shuffle(players);
 		currentPlayer = players.get(0);
+		
+		if (claiming > 0) {
+			List<Territory> territories = new ArrayList<>(Territory.territories);
+			Collections.shuffle(territories);
+			int playerIndex = 0;
+			while(territories.size() > 0) {
+				territories.get(0).forceOwner(players.get(playerIndex));
+				territories.remove(0);
+				players.get(playerIndex).claims--;
+				if (++playerIndex >= players.size()) {
+					playerIndex = 0;
+				}
+			}
+			players.stream().forEach((player) -> player.updateTerritories());
+			unclaimed = 0;
+			
+			if (claiming > 1) {
+				players.stream().forEach((player) -> {
+					while (--player.claims >= 0) {
+						player.getTerritories().get((int) (Math.random() * player.getTerritories().size())).armies++;
+					}
+				});
+				phase = Phase.DRAFT;
+				draftsLeft = currentPlayer.getDrafts();
+			}
+		}
 		
 		new Thread(loop(60)).start();
 	}
@@ -288,6 +315,9 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 	private boolean nextPlayer() { // Returns whether it looped back to the first player
 		currentPlayer = players.get(players.indexOf(currentPlayer) < players.size() - 1 ? players.indexOf(currentPlayer) + 1 : 0);
 		draftsLeft = currentPlayer.getDrafts();
+		if (currentPlayer.hand.size() >= 5) {
+			cardMenu.enable(currentPlayer);
+		}
 		return players.indexOf(currentPlayer) == 0;
 	}
 	
@@ -372,9 +402,6 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					nextPlayer();
 					if(currentPlayer.claims <= 0) {
 						phase = Phase.DRAFT;
-						if (currentPlayer.hand.size() >= 5) {
-							cardMenu.enable(currentPlayer);
-						}
 					}
 				} else if (unclaimed == 0 && clicked.getOwner() == currentPlayer) {
 					clicked.armies++;
@@ -382,9 +409,6 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					nextPlayer();
 					if(currentPlayer.claims <= 0) {
 						phase = Phase.DRAFT;
-						if (currentPlayer.hand.size() >= 5) {
-							cardMenu.enable(currentPlayer);
-						}
 					}
 				}
 				break;
@@ -501,9 +525,6 @@ public class Risk extends JPanel implements MouseListener, KeyListener {
 					phase = Phase.DRAFT;
 					selected = null;
 					nextPlayer();
-					if (currentPlayer.hand.size() > 5) {
-						cardMenu.enable(currentPlayer);
-					}
 					break;
 			}
 		} else if (moveMenu != null && (e.getKeyChar() == '+' || e.getKeyChar() == '-')) {
